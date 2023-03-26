@@ -1,0 +1,48 @@
+pipeline {
+agent any 
+    parameters{
+        string defaultValue: 'Jenkinsfile-vpc', description: '', name: 'JenkinsFileParameters', trim: false
+    }
+    environment{
+            external_id = credentials('ecommerce-external-id')
+            GITLAB_TOKEN = credentials('gitlab-token')
+            dev_account_no = credentials('ecommerce-dev-account-no')
+            prd_account_no = credentials('ecommerce-prd-account-no')
+        }
+    stages {
+        stage('Develop Branch Deploy Code') {
+            when {
+                branch 'dev'
+            }
+            steps {
+            
+                withAWS(role:'ecommerce-cross-account-role', roleAccount:"${dev_account_no}", externalId: "${external_id}", duration: 900, roleSessionName: 'jenkins-session') {
+                
+                    dir('./terraform/network/vpc'){
+                    sh 'git config --global url."http://oauth2:${GITLAB_TOKEN}@ashrujit-gitlab.com".insteadOf http://ashrujit-gitlab.com'    
+                    sh 'terraform init -backend-config=conf/dev.conf'
+                    sh 'terraform apply -var-file=vars/dev.tfvars --auto-approve'
+                  }
+                }
+            
+           }
+        }
+        stage('Production Branch Deploy Code') {
+            when {
+                branch 'prd'
+            }
+            steps {
+            
+                withAWS(role:'ecommerce-cross-account-role', roleAccount:"${prd_account_no}", externalId: "${external_id}", duration: 900, roleSessionName: 'jenkins-session') {
+                
+                    dir('./terraform/network/vpc'){
+                    sh 'git config --global url."http://oauth2:${GITLAB_TOKEN}@ashrujit-gitlab.com".insteadOf http://ashrujit-gitlab.com'    
+                    sh 'terraform init -backend-config=conf/prd.conf'
+                    sh 'terraform apply -var-file=vars/prd.tfvars --auto-approve'
+                  }
+                }
+            
+           }
+        }
+    }
+}

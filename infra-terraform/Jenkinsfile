@@ -1,0 +1,48 @@
+pipeline {
+agent any 
+    parameters{
+        string defaultValue: 'JenkinsFile', description: '', name: 'JenkinsFileParameters', trim: false
+    }
+    stages {
+        stage('Master Branch Deploy Code') {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh """
+                echo "Building Artifact from Main branch1"
+                """
+ 
+                sh """
+                echo "Deploying Code from Main branch"
+                """
+            }
+        }
+        stage('Develop Branch Deploy Code') {
+            when {
+                branch 'dev'
+            }
+            steps {
+                sh """
+                echo "Building Artifact from Develop branch"
+                """
+                sh """
+                echo "Deploying Code from Develop branch"
+                """
+           }
+        }
+        stage('Production Branch Deploy Code') {
+            when {
+                branch 'prd'
+            }
+            steps {
+                sh """
+                echo "Building Artifact from Production branch"
+                """
+                sh """
+                echo "Deploying Code from Production branch"
+                """
+           }
+        }
+    }
+}
